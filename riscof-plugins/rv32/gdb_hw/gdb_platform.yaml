@@ -1,0 +1,14 @@
+mtime:
+  implemented: true
+  address: 0x18030000
+mtimecmp:
+  implemented: true
+  address: 0x18030008
+nmi:
+  label: nmi_vector
+reset:
+  label: reset_vector
+zicbo_cache_block_sz:
+  implemented: true
+  zicbom_sz: 64
+  zicboz_sz: 16

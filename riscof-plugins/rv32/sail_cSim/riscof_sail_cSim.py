@@ -16,6 +16,26 @@ from riscv_isac.isac import isac
 
 logger = logging.getLogger()
 
+def get_proper_abi(isa_name):
+    if "rv64" in isa_name:
+        if "fd" in isa_name:
+            user_abi = "lp64d"
+        elif "f" in isa_name:
+            user_abi = "lp64f"
+        else:
+            user_abi = "lp64"
+    else:
+        if "e" in isa_name:
+            user_abi = "ilp32e"
+        elif "fd" in isa_name:
+            user_abi = "ilp32d"
+        elif "f" in isa_name:
+            user_abi = "ilp32f"
+        else:
+            user_abi = "ilp32"
+
+    return user_abi
+
 class sail_cSim(pluginTemplate):
     __model__ = "sail_c_simulator"
     __version__ = "0.5.0"
@@ -43,8 +63,8 @@ class sail_cSim(pluginTemplate):
         self.suite = suite
         self.work_dir = work_dir
         self.objdump_cmd = 'riscv{1}-unknown-elf-objdump -D {0} > {2};'
-        self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
-         -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles\
+        self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} -mabi={2} \
+         -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
          -T '+self.pluginpath+'/env/link.ld\
          -I '+self.pluginpath+'/env/\
          -I ' + archtest_env
@@ -54,7 +74,6 @@ class sail_cSim(pluginTemplate):
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa_yaml_path = isa_yaml
         self.isa = 'rv' + self.xlen
-        self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
         if "I" in ispec["ISA"]:
             self.isa += 'i'
         if "M" in ispec["ISA"]:
@@ -97,13 +116,16 @@ class sail_cSim(pluginTemplate):
 
             execute = "@cd "+testentry['work_dir']+";"
 
-            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
+            isa_name = testentry['isa'].lower().split("_")[0]
+            user_abi = get_proper_abi(isa_name)
+            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen, user_abi) + ' ' + test + ' -o ' + elf
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
             execute += self.objdump_cmd.format(elf, self.xlen, 'ref.disass')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
+            #print("ISA YAML is %s" % (self.isa_yaml_path))
             isa_yaml = utils.load_yaml(self.isa_yaml_path)
             # Verify the availability of PMP:
             if "PMP" in isa_yaml['hart0']:
@@ -119,17 +141,22 @@ class sail_cSim(pluginTemplate):
                     else:
                         logger.error("PMP count not defined")
                         pmp_flags = ""
+                else:
+                    pmp_flags["pmp-grain"] = 10
+                    pmp_flags["pmp-count"] = 16
             else:
-                pmp_flags = ""
+                pmp_flags = {}
+                pmp_flags["pmp-grain"] = 10
+                pmp_flags["pmp-count"] = 16
 
             try:
-                sail_config = subprocess.run(["riscv_sim_rv32d", "--print-default-config"], check= True, text=True, capture_output=True)
+                sail_config = subprocess.run(["riscv_sim_rv64d", "--print-default-config"], check= True, text=True, capture_output=True)
                 sail_config = json.loads(sail_config.stdout)
             except subprocess.CalledProcessError as e:
-                print("riscv_sim_rv32d --print-default-config failed:", e.stderr)
+                print("riscv_sim_rv64d --print-default-config failed:", e.stderr)
                 exit(1)
             except json.JSONDecodeError:
-                print("riscv_sim_rv32d --print-default-config output is not valid JSON.")
+                print("riscv_sim_rv64d --print-default-config output is not valid JSON.")
                 exit(1)
 
             sail_config["memory"]["pmp"]["grain"] = pmp_flags["pmp-grain"]
@@ -142,7 +169,7 @@ class sail_cSim(pluginTemplate):
             with open(sail_config_path, 'w', encoding='utf-8') as file:
                 json.dump(sail_config, file, indent=4)
 
-            execute += self.sail_exe[self.xlen] + ' --config={0} -v --trace=step --signature-granularity=4  --test-signature={1} {2} > {3}.log 2>&1;'.format(sail_config_path, sig_file, elf, test_name)
+            execute += self.sail_exe[self.xlen] + ' --config={0} -v --trace=step --signature-granularity=8  --test-signature={1} {2} > {3}.log 2>&1;'.format(sail_config_path, sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
