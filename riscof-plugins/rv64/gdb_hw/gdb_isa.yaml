@@ -1,11 +1,11 @@
 hart_ids: [0]
 hart0:
-  ISA: RV64IMAFDCSUZicbom_Zicbop_Zicboz_Zicntr_Zicond_Zicsr_Zifencei_Zihintpause_Zfh_Zba_Zbb_Zbc_Zbs_Sdext_Svnapot
-  physical_addr_sz: 32
+  ISA: RV64IMAFDCVSUZicbom_Zicbop_Zicboz_Zicntr_Zicond_Zicsr_Zifencei_Zihintpause_Zihpm_Zfa_Zfh_Zcb_Zba_Zbb_Zbc_Zbs_Zk_Zks_Sdext_Svnapot
+  physical_addr_sz: 40
   User_Spec_Version: '2.3'
   supported_xlen: [64]
   misa:
-   reset-val: 0x800000000014112D
+   reset-val: 0x800000000034112D
    rv64:
      accessible: true
      mxl:
@@ -23,12 +23,12 @@ hart0:
            warl:
               dependency_fields: []
               legal:
-                - extensions[25:0] bitmask [0x014112D, 0x0000000]
+                - extensions[25:0] bitmask [0x034112D, 0x0000000]
               wr_illegal:
                 - Unchanged
 
   PMP:
-    implemented: False
+    implemented: True
     pmp-grain: 10
-    pmp-count: 16
+    pmp-count: 8
     pmp-writable: 8

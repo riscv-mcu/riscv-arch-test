@@ -1,6 +1,12 @@
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
 
+// TODO Need to customized for Nuclei RISC-V CPU
+#define RVMODEL_CBZ_BLOCKSIZE 16
+#define RVMODEL_CMO_BLOCKSIZE 64
+#define RVMODEL_PMP_GRAIN 10
+#define RVMODEL_NUM_PMPS 8
+
 #define RVMODEL_DATA_SECTION \
         .pushsection .tohost,"aw",@progbits;                            \
         .align 8; .global tohost; tohost: .dword 0;                     \
@@ -50,8 +56,5 @@ li x1, 1                ;\
 #define RVMODEL_CLEAR_MTIMER_INT
 
 #define RVMODEL_CLEAR_MEXT_INT
-
-#define RVMODEL_PMP_GRAIN 0
-#define RVMODEL_NUM_PMPS 16
 
 #endif // _COMPLIANCE_MODEL_H

@@ -8,3 +8,7 @@ nmi:
   label: nmi_vector
 reset:
   label: reset_vector
+zicbo_cache_block_sz:
+  implemented: true
+  zicbom_sz: 64
+  zicboz_sz: 16

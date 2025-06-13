@@ -43,6 +43,7 @@ def get_proper_abi(isa_name):
     return user_abi
 
 class gdb_hw(pluginTemplate):
+    __model__ = "UX900"
     def __init__(self,*args,**kwargs):
         sclass = super().__init__(*args,**kwargs)
 
