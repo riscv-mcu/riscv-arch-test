@@ -10,5 +10,5 @@ reset:
   label: reset_vector
 zicbo_cache_block_sz:
   implemented: true
-  zicbom_sz: 64
+  zicbom_sz: 16
   zicboz_sz: 16

@@ -191,14 +191,34 @@ class Runner:
         elif sigout is not None:
             fsigout = open(sigout, 'w')
 
-            # Set breakpoint on halt
-            print("Setting breakpoint on halt (write_tohost)...")
-            gdb.execute("b write_tohost")
+            if "ebreak" in elf:
+                print("Meet special ebreak case, disconnect gdb server, ebreak handling internally")
+                gdb.execute("monitor riscv set_ebreakm off")
+                gdb.execute("monitor riscv set_ebreaks off")
+                gdb.execute("monitor riscv set_ebreaku off")
+                # here gdb continue & then interrupt is not working
+                # so switch to use openocd monitor resume and halt processing
+                gdb.execute("set $pc=rvtest_entry_point")
+                gdb.execute("monitor resume")
+                sleep(1)
+                gdb.execute("monitor halt")
+                gdb.execute("si")
+                print("Restore ebreak handling trap to gdb")
+                gdb.execute("monitor riscv set_ebreakm on")
+                gdb.execute("monitor riscv set_ebreaks on")
+                gdb.execute("monitor riscv set_ebreaku on")
+                gdb.execute("info reg pc")
+            else:
+                # Set breakpoint on halt
+                print("Setting breakpoint on halt (write_tohost)...")
+                gdb.execute("b write_tohost")
 
-            # Continue execution
-            print("Continuing...")
-            gdb.execute("c")
+                # Continue execution
+                print("Continuing...")
+                gdb.execute("c")
 
+            # mcache_ctl is nuclei custom csr, require nuclei customized openocd
+            gdb.execute("info reg mcache_ctl")
             # Read the signature
             print("Reading signature...")
             gdb.execute("set $sigsize = (void*)&end_signature - (void*)&begin_signature")

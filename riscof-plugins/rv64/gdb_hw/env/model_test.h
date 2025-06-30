@@ -36,6 +36,7 @@ write_tohost:           ;\
 #define RVMODEL_BOOT    \
   .option push ;\
   .option arch, +zicsr, +zifencei ; \
+	csrr a0, 0xfc2 /* mcfg_info csr */ ;\
 __nuclei_enable_l1_icache: ;\
 	li t0, 1<<9 /* i cache bit */ ;\
 	and t0, a0, t0 ;\
