@@ -156,7 +156,7 @@ Mend_PMP:                                    ;\
 #define ALL_MEM_PMP                                               ;\
     	li t2, -1                                                 ;\
     	csrw pmpaddr0, t2                                         ;\
-    	li t2, 0x0F	                                          ;\
+    	li t2, 0x1F	                                          ;\
     	csrw pmpcfg0, t2                                          ;\
     	sfence.vma                                                ;
 
